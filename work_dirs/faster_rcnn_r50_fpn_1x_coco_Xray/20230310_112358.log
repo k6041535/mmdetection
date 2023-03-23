@@ -1,0 +1,514 @@
+2023-03-10 11:24:00,129 - mmdet - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: win32
+Python: 3.8.16 (default, Mar  2 2023, 03:18:16) [MSC v.1916 64 bit (AMD64)]
+CUDA available: True
+GPU 0: NVIDIA GeForce RTX 3060
+CUDA_HOME: D:\Anaconda\envs\openmmlab
+NVCC: Cuda compilation tools, release 11.7, V11.7.99
+MSVC: Microsoft (R) C/C++ Optimizing Compiler Version 19.35.32215 for x64
+GCC: n/a
+PyTorch: 1.13.1
+PyTorch compiling details: PyTorch built with:
+  - C++ Version: 199711
+  - MSVC 192829337
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.6.0 (Git Hash 52b5f107dd9cf10910aaa19cb47f3abf9b349815)
+  - OpenMP 2019
+  - LAPACK is enabled (usually provided by MKL)
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.7
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.5
+  - Magma 2.5.4
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.7, CUDNN_VERSION=8.5.0, CXX_COMPILER=C:/cb/pytorch_1000000000000/work/tmp_bin/sccache-cl.exe, CXX_FLAGS=/DWIN32 /D_WINDOWS /GR /EHsc /w /bigobj -DUSE_PTHREADPOOL -openmp:experimental -IC:/cb/pytorch_1000000000000/work/mkl/include -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOCUPTI -DUSE_FBGEMM -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.13.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=OFF, USE_NNPACK=OFF, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+TorchVision: 0.14.1
+OpenCV: 4.7.0
+MMCV: 1.7.1
+MMCV Compiler: MSVC 192829924
+MMCV CUDA Compiler: 11.7
+MMDetection: 2.28.2+e9cae2d
+------------------------------------------------------------
+
+2023-03-10 11:24:00,296 - mmdet - INFO - Distributed training: False
+2023-03-10 11:24:00,499 - mmdet - INFO - Config:
+model = dict(
+    type='FasterRCNN',
+    backbone=dict(
+        type='ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+    neck=dict(
+        type='FPN',
+        in_channels=[256, 512, 1024, 2048],
+        out_channels=256,
+        num_outs=5),
+    rpn_head=dict(
+        type='RPNHead',
+        in_channels=256,
+        feat_channels=256,
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            scales=[8],
+            ratios=[0.5, 1.0, 2.0],
+            strides=[4, 8, 16, 32, 64]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[0.0, 0.0, 0.0, 0.0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
+        loss_cls=dict(
+            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
+    roi_head=dict(
+        type='StandardRoIHead',
+        bbox_roi_extractor=dict(
+            type='SingleRoIExtractor',
+            roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
+            out_channels=256,
+            featmap_strides=[4, 8, 16, 32]),
+        bbox_head=dict(
+            type='Shared2FCBBoxHead',
+            in_channels=256,
+            fc_out_channels=1024,
+            roi_feat_size=7,
+            num_classes=1,
+            bbox_coder=dict(
+                type='DeltaXYWHBBoxCoder',
+                target_means=[0.0, 0.0, 0.0, 0.0],
+                target_stds=[0.1, 0.1, 0.2, 0.2]),
+            reg_class_agnostic=False,
+            loss_cls=dict(
+                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            loss_bbox=dict(type='L1Loss', loss_weight=1.0))),
+    train_cfg=dict(
+        rpn=dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
+                pos_iou_thr=0.7,
+                neg_iou_thr=0.3,
+                min_pos_iou=0.3,
+                match_low_quality=True,
+                ignore_iof_thr=-1),
+            sampler=dict(
+                type='RandomSampler',
+                num=256,
+                pos_fraction=0.5,
+                neg_pos_ub=-1,
+                add_gt_as_proposals=False),
+            allowed_border=-1,
+            pos_weight=-1,
+            debug=False),
+        rpn_proposal=dict(
+            nms_pre=2000,
+            max_per_img=1000,
+            nms=dict(type='nms', iou_threshold=0.7),
+            min_bbox_size=0),
+        rcnn=dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
+                pos_iou_thr=0.5,
+                neg_iou_thr=0.5,
+                min_pos_iou=0.5,
+                match_low_quality=False,
+                ignore_iof_thr=-1),
+            sampler=dict(
+                type='RandomSampler',
+                num=512,
+                pos_fraction=0.25,
+                neg_pos_ub=-1,
+                add_gt_as_proposals=True),
+            pos_weight=-1,
+            debug=False)),
+    test_cfg=dict(
+        rpn=dict(
+            nms_pre=1000,
+            max_per_img=1000,
+            nms=dict(type='nms', iou_threshold=0.7),
+            min_bbox_size=0),
+        rcnn=dict(
+            score_thr=0.05,
+            nms=dict(type='nms', iou_threshold=0.5),
+            max_per_img=100)))
+dataset_type = 'CocoDataset'
+data_root = 'coco/'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.5),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='Pad', size_divisor=32),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='MultiScaleFlipAug',
+        img_scale=(1333, 800),
+        flip=False,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ])
+]
+data = dict(
+    samples_per_gpu=4,
+    workers_per_gpu=2,
+    train=dict(
+        type='CocoDataset',
+        ann_file='datasets/coco/annotations/instances_train2017.json',
+        img_prefix='coco/train2017',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True),
+            dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+            dict(type='RandomFlip', flip_ratio=0.5),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='DefaultFormatBundle'),
+            dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+        ],
+        classes=('Xray', )),
+    val=dict(
+        type='CocoDataset',
+        ann_file='coco/annotations/instances_val2017.json',
+        img_prefix='coco/val2017',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ],
+        classes=('Xray', )),
+    test=dict(
+        type='CocoDataset',
+        ann_file='coco/annotations/instances_val2017.json',
+        img_prefix='coco/val2017',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ],
+        classes=('Xray', )))
+evaluation = dict(interval=1, metric='bbox')
+optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001,
+    step=[8, 11])
+runner = dict(type='EpochBasedRunner', max_epochs=12)
+checkpoint_config = dict(interval=1)
+log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
+custom_hooks = [dict(type='NumClassCheckHook')]
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+opencv_num_threads = 0
+mp_start_method = 'fork'
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+classes = ('Xray', )
+work_dir = './work_dirs\faster_rcnn_r50_fpn_1x_coco_Xray'
+auto_resume = False
+gpu_ids = [0]
+
+2023-03-10 11:24:00,518 - mmdet - INFO - Set random seed to 364806392, deterministic: False
+2023-03-10 11:24:03,939 - mmdet - INFO - Automatic scaling of learning rate (LR) has been disabled.
+2023-03-10 11:24:03,961 - mmdet - INFO - Start running, host: user@RADWCTAHY, work_dir: C:\Users\user\mmdetection\work_dirs\faster_rcnn_r50_fpn_1x_coco_Xray
+2023-03-10 11:24:03,962 - mmdet - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) NumClassCheckHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) NumClassCheckHook                  
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2023-03-10 11:24:03,964 - mmdet - INFO - workflow: [('train', 1)], max: 12 epochs
+2023-03-10 11:24:03,964 - mmdet - INFO - Checkpoints will be saved to C:\Users\user\mmdetection\work_dirs\faster_rcnn_r50_fpn_1x_coco_Xray by HardDiskBackend.
+2023-03-10 11:24:48,560 - mmdet - INFO - Saving checkpoint at 1 epochs
+2023-03-10 11:24:54,263 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:24:54,263 - mmdet - ERROR - The testing results of the whole dataset is empty.
+2023-03-10 11:24:54,264 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:24:54,264 - mmdet - INFO - Epoch(val) [1][6]	
+2023-03-10 11:25:15,535 - mmdet - INFO - Saving checkpoint at 2 epochs
+2023-03-10 11:25:20,838 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:25:20,839 - mmdet - ERROR - The testing results of the whole dataset is empty.
+2023-03-10 11:25:20,840 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:25:20,840 - mmdet - INFO - Epoch(val) [2][6]	
+2023-03-10 11:25:41,887 - mmdet - INFO - Saving checkpoint at 3 epochs
+2023-03-10 11:25:47,238 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:25:47,308 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.180
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 0.396
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 0.187
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.196
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.308
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.308
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.308
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.336
+
+2023-03-10 11:25:47,311 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:25:47,311 - mmdet - INFO - Epoch(val) [3][6]	bbox_mAP: 0.1799, bbox_mAP_50: 0.3955, bbox_mAP_75: 0.1870, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.0000, bbox_mAP_l: 0.1959, bbox_mAP_copypaste: 0.1799 0.3955 0.1870 -1.0000 0.0000 0.1959
+2023-03-10 11:26:08,278 - mmdet - INFO - Saving checkpoint at 4 epochs
+2023-03-10 11:26:13,408 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:26:13,439 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.343
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 0.762
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 0.161
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.300
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.361
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.525
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.525
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.525
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.500
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.527
+
+2023-03-10 11:26:13,441 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:26:13,441 - mmdet - INFO - Epoch(val) [4][6]	bbox_mAP: 0.3429, bbox_mAP_50: 0.7621, bbox_mAP_75: 0.1608, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.3000, bbox_mAP_l: 0.3606, bbox_mAP_copypaste: 0.3429 0.7621 0.1608 -1.0000 0.3000 0.3606
+2023-03-10 11:26:34,370 - mmdet - INFO - Saving checkpoint at 5 epochs
+2023-03-10 11:26:40,186 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:26:40,208 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.521
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 0.375
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.400
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.532
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.550
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.550
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.550
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.400
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.564
+
+2023-03-10 11:26:40,209 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:26:40,209 - mmdet - INFO - Epoch(val) [5][6]	bbox_mAP: 0.5210, bbox_mAP_50: 1.0000, bbox_mAP_75: 0.3746, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.4000, bbox_mAP_l: 0.5318, bbox_mAP_copypaste: 0.5210 1.0000 0.3746 -1.0000 0.4000 0.5318
+2023-03-10 11:27:00,515 - mmdet - INFO - Saving checkpoint at 6 epochs
+2023-03-10 11:27:05,587 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:27:05,599 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.568
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 0.564
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.550
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.573
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.617
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.617
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.617
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.600
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.618
+
+2023-03-10 11:27:05,600 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:27:05,601 - mmdet - INFO - Epoch(val) [6][6]	bbox_mAP: 0.5680, bbox_mAP_50: 1.0000, bbox_mAP_75: 0.5644, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.5500, bbox_mAP_l: 0.5732, bbox_mAP_copypaste: 0.5680 1.0000 0.5644 -1.0000 0.5500 0.5732
+2023-03-10 11:27:26,587 - mmdet - INFO - Saving checkpoint at 7 epochs
+2023-03-10 11:27:32,411 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:27:32,433 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.769
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.800
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.768
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.800
+
+2023-03-10 11:27:32,436 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:27:32,436 - mmdet - INFO - Epoch(val) [7][6]	bbox_mAP: 0.7691, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.8000, bbox_mAP_l: 0.7681, bbox_mAP_copypaste: 0.7691 1.0000 1.0000 -1.0000 0.8000 0.7681
+2023-03-10 11:27:52,782 - mmdet - INFO - Saving checkpoint at 8 epochs
+2023-03-10 11:27:57,760 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:27:57,770 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.784
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.800
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.783
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.808
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.800
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.809
+
+2023-03-10 11:27:57,771 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:27:57,771 - mmdet - INFO - Epoch(val) [8][6]	bbox_mAP: 0.7839, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.8000, bbox_mAP_l: 0.7827, bbox_mAP_copypaste: 0.7839 1.0000 1.0000 -1.0000 0.8000 0.7827
+2023-03-10 11:28:18,126 - mmdet - INFO - Saving checkpoint at 9 epochs
+2023-03-10 11:28:23,107 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:28:23,118 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.889
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.888
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.908
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.908
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.908
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.909
+
+2023-03-10 11:28:23,119 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:28:23,119 - mmdet - INFO - Epoch(val) [9][6]	bbox_mAP: 0.8891, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.9000, bbox_mAP_l: 0.8883, bbox_mAP_copypaste: 0.8891 1.0000 1.0000 -1.0000 0.9000 0.8883
+2023-03-10 11:28:43,306 - mmdet - INFO - Saving checkpoint at 10 epochs
+2023-03-10 11:28:48,312 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:28:48,322 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.821
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.700
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.832
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.842
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.842
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.842
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.700
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.855
+
+2023-03-10 11:28:48,323 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:28:48,323 - mmdet - INFO - Epoch(val) [10][6]	bbox_mAP: 0.8206, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.7000, bbox_mAP_l: 0.8322, bbox_mAP_copypaste: 0.8206 1.0000 1.0000 -1.0000 0.7000 0.8322
+2023-03-10 11:29:08,767 - mmdet - INFO - Saving checkpoint at 11 epochs
+2023-03-10 11:29:13,791 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:29:13,810 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.925
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.930
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.942
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.942
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.942
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.945
+
+2023-03-10 11:29:13,811 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:29:13,812 - mmdet - INFO - Epoch(val) [11][6]	bbox_mAP: 0.9252, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.9000, bbox_mAP_l: 0.9297, bbox_mAP_copypaste: 0.9252 1.0000 1.0000 -1.0000 0.9000 0.9297
+2023-03-10 11:29:34,107 - mmdet - INFO - Saving checkpoint at 12 epochs
+2023-03-10 11:29:39,131 - mmdet - INFO - Evaluating bbox...
+2023-03-10 11:29:39,145 - mmdet - INFO - 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.905
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=1000 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.906
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.933
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=300 ] = 0.933
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=1000 ] = 0.933
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=1000 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=1000 ] = 0.900
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=1000 ] = 0.936
+
+2023-03-10 11:29:39,146 - mmdet - INFO - Exp name: faster_rcnn_r50_fpn_1x_coco_Xray.py
+2023-03-10 11:29:39,146 - mmdet - INFO - Epoch(val) [12][6]	bbox_mAP: 0.9046, bbox_mAP_50: 1.0000, bbox_mAP_75: 1.0000, bbox_mAP_s: -1.0000, bbox_mAP_m: 0.9000, bbox_mAP_l: 0.9064, bbox_mAP_copypaste: 0.9046 1.0000 1.0000 -1.0000 0.9000 0.9064
